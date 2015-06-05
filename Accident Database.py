@@ -31,14 +31,17 @@ single_location = [k for k, v in Counter(column["GXID"]).iteritems() if v == 1]
 
 column["XANGLE"] = []
 column["WDCODE"] = []
+column["TYPEXING"] = []
 for xing in column["GXID"]:
     if xing in inv_column["CROSSING"]:
         i = inv_column["CROSSING"].index(xing)
         column["XANGLE"].append(str(inv_column["XANGLE"][i]))
         column["WDCODE"].append(str(inv_column["WDCODE"][i]))
+        column["TYPEXING"].append(str(inv_column["TYPEXING"][i]))
     else:
         column["XANGLE"].append("None")
         column["WDCODE"].append("None")
+        column["TYPEXING"].append("None")
     
                                     
 ##for i, h in enumerate(headers):
@@ -46,13 +49,15 @@ for xing in column["GXID"]:
 ##        column[h] = []
 
 #
-with open('Files/NewFile.csv','wb') as fp:
+with open('Files/MicroMacro/MicroMacroBucksAngle3060.csv','wb') as fp:
     a = csv.writer(fp, delimiter = ',')
-    a.writerow(["CROSSING","Line in File","PUBLIC","ANGLE"])
+    a.writerow(["CROSSING","Line in File","PUBLIC","TYPEXING","TYPACC","RRCAR", "POSITION"])
     i = 0
-    for crossing, drivage, typveh, public, angle, warn in zip(column["GXID"],column["DRIVAGE"], column["TYPVEH"], column["PUBLIC"], column["XANGLE"], column["WDCODE"]):
-        if (public == "Y" and angle == "1" and warn == "8"):#(drivage != "" and int(drivage > 40)) and (typveh != "" and typveh in ["A","B","C","D","E","F","G","H","J"])):
-            write = [crossing,str(i),public,angle]    
-            a.writerow(write)
+    for crossing, drivage, typveh, typacc, rrcar, position, public, angle, warn, inv_public in zip(column["GXID"],column["DRIVAGE"], column["TYPVEH"], column["TYPACC"], column["RRCAR"], column["POSITION"], column["PUBLIC"], column["XANGLE"], column["WDCODE"], column["TYPEXING"]):
+        if (crossing in inv_column['CROSSING'] and crossing in single_location):
+            if (angle == "2" and warn == "3"): #angle == "1" and warn == "8"):#(drivage != "" and int(drivage > 40)) and (typveh != "" and typveh in ["A","B","C","D","E","F","G","H","J"])):
+                if ((typacc == "1" and position == "3") or (typacc == "2" and int(rrcar) <= 3)):
+                    write = [crossing,str(i),public,inv_public, typacc, rrcar, position]    
+                    a.writerow(write)
         i+=1
 fp.close()

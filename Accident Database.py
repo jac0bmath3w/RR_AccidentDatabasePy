@@ -3,7 +3,7 @@ import csv
 f = open("Illinois Compiled Database 2002-11.csv", "rb")
 reader = csv.reader(f)
 headers = reader.next()
-rel_headers = ['GXID','MONTH','AMPM','VEHSPD','TYPVEH','VEHDIR','POSITION','TYPACC','VISIBLTY','WEATHER','TYPTRK','TRKCLAS','TRNSPD','TRNDIR','LOCWARN','WARNSIG','LIGHTS','MOTORIST','VIEW','CROSSING','PUBLIC','DRIVAGE','DRIVGEN']
+rel_headers = ['GXID','MONTH','AMPM','VEHSPD','TYPVEH','VEHDIR','POSITION','RRCAR','TYPACC','VISIBLTY','WEATHER','TYPTRK','TRKCLAS','TRNSPD','TRNDIR','LOCWARN','WARNSIG','LIGHTS','MOTORIST','VIEW','CROSSING','PUBLIC','DRIVAGE','DRIVGEN']
 index = []
 column = {}
 for i, h in enumerate(rel_headers):
@@ -12,6 +12,8 @@ for i, h in enumerate(rel_headers):
 
 for row in reader:
     for j in range(len(index)):
+        if (row[index[j]] == ""):
+            row[index[j]] = "0"
         column[headers[index[j]]].append(str(row[index[j]]))
     
 inv_column = {}    
@@ -31,14 +33,17 @@ single_location = [k for k, v in Counter(column["GXID"]).iteritems() if v == 1]
 
 column["XANGLE"] = []
 column["WDCODE"] = []
+column["TYPEXING"] = []
 for xing in column["GXID"]:
     if xing in inv_column["CROSSING"]:
         i = inv_column["CROSSING"].index(xing)
         column["XANGLE"].append(str(inv_column["XANGLE"][i]))
         column["WDCODE"].append(str(inv_column["WDCODE"][i]))
+        column["TYPEXING"].append(str(inv_column["TYPEXING"][i]))
     else:
         column["XANGLE"].append("None")
         column["WDCODE"].append("None")
+        column["TYPEXING"].append("None")
     
                                     
 ##for i, h in enumerate(headers):
@@ -46,13 +51,15 @@ for xing in column["GXID"]:
 ##        column[h] = []
 
 #
-with open('Files/NewFile.csv','wb') as fp:
+with open('Files/WarnDev/MicroMacro/SingleGatesAngle60.csv','wb') as fp:
     a = csv.writer(fp, delimiter = ',')
-    a.writerow(["CROSSING","Line in File","PUBLIC","ANGLE"])
+    a.writerow(["CROSSING","Line in File","PUBLIC","TYPEXING","WARNING DEVICE CODE","ANGLE","TYPACC","POSITION","VEHSPD","RRCAR"])
     i = 0
-    for crossing, drivage, typveh, public, angle, warn in zip(column["GXID"],column["DRIVAGE"], column["TYPVEH"], column["PUBLIC"], column["XANGLE"], column["WDCODE"]):
-        if (public == "Y" and angle == "1" and warn == "8"):#(drivage != "" and int(drivage > 40)) and (typveh != "" and typveh in ["A","B","C","D","E","F","G","H","J"])):
-            write = [crossing,str(i),public,angle]    
-            a.writerow(write)
+    for crossing, drivage, typveh, typacc, rrcar, position, spd, public, angle, acc_warn, warn, inv_public in zip(column["GXID"],column["DRIVAGE"], column["TYPVEH"], column["TYPACC"], column["RRCAR"], column["POSITION"], column["VEHSPD"], column["PUBLIC"], column["XANGLE"], column["CROSSING"],column["WDCODE"], column["TYPEXING"]):
+        if crossing in single_location and crossing in inv_column["CROSSING"]: #angle == "1" and warn == "8"):#(drivage != "" and int(drivage > 40)) and (typveh != "" and typveh in ["A","B","C","D","E","F","G","H","J"])):
+            if ("01" in acc_warn and "101" not in acc_warn) and (angle == "3"): #and "101" not in acc_warn:
+                if ((typacc == "1" and int(spd) > 10) or (typacc == "2" and int(rrcar) <= 3 and int(rrcar) > 0)):
+                    write = [crossing,str(i),public,inv_public,acc_warn,angle,typacc,position,spd,rrcar]    
+                    a.writerow(write)
         i+=1
 fp.close()
